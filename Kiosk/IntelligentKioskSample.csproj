@@ -101,6 +101,9 @@
     <Content Include="Assets\RealtimeObjectDetection.png" />
     <Content Include="Assets\simple_fruits.onnx" />
     <Content Include="Assets\mixed_items.onnx" />
+    <Content Include="Assets\safety_model.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="IntelligentKioskSample_TemporaryKey.pfx" />
     <None Include="packages.config" />
     <Content Include="Views\CustomVision\BuiltInClassificationModels.json">
@@ -183,6 +186,7 @@
     <Compile Include="Models\CustomVisionModelData.cs" />
     <Compile Include="Models\Platform.cs" />
     <Compile Include="NavMenuItem.cs" />
+    <Compile Include="safety_model.cs" />
     <Compile Include="SettingsHelper.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Views\BingNewsAnalytics.xaml.cs">
