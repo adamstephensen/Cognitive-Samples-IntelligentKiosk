@@ -51,6 +51,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using DJI.WindowsSDK;
 
 namespace IntelligentKioskSample.Views
 {
@@ -66,9 +67,65 @@ namespace IntelligentKioskSample.Views
 
         public ObservableCollection<CustomVisionModelData> Projects { get; set; } = new ObservableCollection<CustomVisionModelData>();
 
+        private void RegisterDJISDK() {
+            try
+            {
+                DJISDKManager.Instance.SDKRegistrationStateChanged += Instance_SDKRegistrationEvent;
+
+                // Replace with your registered DJI App Key as per https://developer.dji.com/windows-sdk/documentation/quick-start/index.html. 
+                // Make sure your App Key matched your application's package name on DJI developer center.
+                DJISDKManager.Instance.RegisterApp(SettingsHelper.DJIAppplicationKey);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+        private async void Instance_SDKRegistrationEvent(SDKRegistrationState state, SDKError resultCode)
+        {
+            if (resultCode == SDKError.NO_ERROR)
+            {
+                System.Diagnostics.Debug.WriteLine("Register app successfully.");
+
+                //The product connection state will be updated when it changes here.
+                DJISDKManager.Instance.ComponentManager.GetProductHandler(0).ProductTypeChanged += async delegate (object sender, ProductTypeMsg? value)
+                {
+                    await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
+                    {
+                        if (value != null && value?.value != ProductType.UNRECOGNIZED)
+                        {
+                            System.Diagnostics.Debug.WriteLine("The Aircraft is connected now.");
+                            //You can load/display your pages according to the aircraft connection state here.
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("The Aircraft is disconnected now.");
+                            //You can hide your pages according to the aircraft connection state here, or show the connection tips to the users.
+                        }
+                    });
+                };
+
+                //If you want to get the latest product connection state manually, you can use the following code
+                var productType = (await DJISDKManager.Instance.ComponentManager.GetProductHandler(0).GetProductTypeAsync()).value;
+                if (productType != null && productType?.value != ProductType.UNRECOGNIZED)
+                {
+                    System.Diagnostics.Debug.WriteLine("The Aircraft is connected now.");
+                    //You can load/display your pages according to the aircraft connection state here.
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("Register SDK failed, the error is: ");
+                System.Diagnostics.Debug.WriteLine(resultCode.ToString());
+            }
+        }
+
         public RealtimeObjectDetection()
         {
             this.InitializeComponent();
+
+            RegisterDJISDK();
 
             Window.Current.Activated += CurrentWindowActivationStateChanged;
             this.cameraControl.HideCameraControls();
@@ -285,11 +342,11 @@ namespace IntelligentKioskSample.Views
                     {
                         await videoFrame.CopyToAsync(buffer);
 
-                        DateTime start = DateTime.Now;
+                        System.DateTime start = System.DateTime.Now;
 
                         IList<PredictionModel> predictions = await this.objectDetectionModel.PredictImageAsync(buffer);
 
-                        double predictionTimeInMilliseconds = (DateTime.Now - start).TotalMilliseconds;
+                        double predictionTimeInMilliseconds = (System.DateTime.Now - start).TotalMilliseconds;
 
                         await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                         {

@@ -106,6 +106,8 @@
     </Content>
     <None Include="IntelligentKioskSample_TemporaryKey.pfx" />
     <None Include="packages.config" />
+    <Content Include="libcrypto-1_1.dll" />
+    <Content Include="pthread_dll.dll" />
     <Content Include="Views\CustomVision\BuiltInClassificationModels.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -554,6 +556,11 @@
     <PackageReference Include="WriteableBitmapEx">
       <Version>1.5.0</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="DJIWindowsSDK">
+      <HintPath>DjiWsdk\DJIWindowsSDK.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

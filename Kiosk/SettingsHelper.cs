@@ -44,6 +44,10 @@ namespace IntelligentKioskSample
         public static readonly string DefaultApiEndpoint = "https://westus.api.cognitive.microsoft.com";
         public static readonly string CustomEndpointName = "Custom";
 
+        // Replace with your registered DJI App Key as per https://developer.dji.com/windows-sdk/documentation/quick-start/index.html. 
+        // Make sure your App Key matched your application's package name on DJI developer center.
+        public static readonly string DJIAppplicationKey = "<enter your key here>";
+
         public static readonly string[] AvailableApiRegions = new string[]
         {
             "westus",
