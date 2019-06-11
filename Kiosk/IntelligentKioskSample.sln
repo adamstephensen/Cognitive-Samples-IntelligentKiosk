@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KioskRuntimeComponent", "Ki
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceHelpers", "ServiceHelpers\ServiceHelpers.csproj", "{568B29F2-D125-4BC4-B07E-F7B385DBB6D9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DJIVideoParser", "..\..\..\dji-sdk\Windows-SDK\Sample Code\DJIVideoParser\DJIVideoParser.vcxproj", "{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CNDebug|Any CPU = CNDebug|Any CPU
@@ -107,6 +109,28 @@ Global
 		{568B29F2-D125-4BC4-B07E-F7B385DBB6D9}.Release|x64.Build.0 = Release|x64
 		{568B29F2-D125-4BC4-B07E-F7B385DBB6D9}.Release|x86.ActiveCfg = Release|x86
 		{568B29F2-D125-4BC4-B07E-F7B385DBB6D9}.Release|x86.Build.0 = Release|x86
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.CNDebug|Any CPU.ActiveCfg = Release|x64
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.CNDebug|Any CPU.Build.0 = Release|x64
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.CNDebug|ARM.ActiveCfg = Debug|ARM
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.CNDebug|ARM.Build.0 = Debug|ARM
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.CNDebug|x64.ActiveCfg = Debug|x64
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.CNDebug|x64.Build.0 = Debug|x64
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.CNDebug|x86.ActiveCfg = Debug|Win32
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.CNDebug|x86.Build.0 = Debug|Win32
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Debug|ARM.ActiveCfg = Debug|ARM
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Debug|ARM.Build.0 = Debug|ARM
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Debug|x64.ActiveCfg = Debug|x64
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Debug|x64.Build.0 = Debug|x64
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Debug|x86.ActiveCfg = Debug|Win32
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Debug|x86.Build.0 = Debug|Win32
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Release|Any CPU.ActiveCfg = Release|Win32
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Release|ARM.ActiveCfg = Release|ARM
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Release|ARM.Build.0 = Release|ARM
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Release|x64.ActiveCfg = Release|x64
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Release|x64.Build.0 = Release|x64
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Release|x86.ActiveCfg = Release|Win32
+		{5F8B4A30-B8D1-46B5-BE32-AEE3C899E3BF}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

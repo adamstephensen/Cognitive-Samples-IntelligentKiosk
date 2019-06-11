@@ -51,7 +51,12 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+
 using DJI.WindowsSDK;
+using System.IO;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.AI.MachineLearning;
+//using DJIVideoParser;
 
 namespace IntelligentKioskSample.Views
 {
@@ -120,6 +125,18 @@ namespace IntelligentKioskSample.Views
                 System.Diagnostics.Debug.WriteLine(resultCode.ToString());
             }
         }
+        async void ReceiveDecodedData(byte[] data, int width, int height)
+        {
+            var buffer = data.AsBuffer();
+            var softwareBitmap = SoftwareBitmap.CreateCopyFromBuffer(buffer, BitmapPixelFormat.Rgba8, width, height);
+            var videoFrame = VideoFrame.CreateWithSoftwareBitmap(softwareBitmap);
+            var imageFeatureValue = ImageFeatureValue.CreateFromVideoFrame(videoFrame);
+
+            File.WriteAllBytes(@"C:\temp\images\" + Guid.NewGuid().ToString() + ".png", data);
+        }
+
+ 
+
 
         public RealtimeObjectDetection()
         {
@@ -159,6 +176,7 @@ namespace IntelligentKioskSample.Views
 
             await this.LoadProjectsFromFile(e.Parameter as CustomVisionModelData);
             await this.cameraControl.StartStreamAsync(isForRealTimeProcessing: true);
+            await this.cameraControl.InitializeVideoFeedModule();
 
             base.OnNavigatedTo(e);
         }

@@ -522,6 +522,10 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\dji-sdk\Windows-SDK\Sample Code\DJIVideoParser\DJIVideoParser.vcxproj">
+      <Project>{5f8b4a30-b8d1-46b5-be32-aee3c899e3bf}</Project>
+      <Name>DJIVideoParser</Name>
+    </ProjectReference>
     <ProjectReference Include="KioskRuntimeComponent\KioskRuntimeComponent.csproj">
       <Project>{fc5a0250-b742-40a8-82ca-bec2df66982f}</Project>
       <Name>KioskRuntimeComponent</Name>
@@ -561,6 +565,9 @@
     <Reference Include="DJIWindowsSDK">
       <HintPath>DjiWsdk\DJIWindowsSDK.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

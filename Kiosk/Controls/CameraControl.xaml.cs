@@ -49,6 +49,8 @@ using Windows.System.Threading;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
+using DJI.WindowsSDK;
+
 // The User Control item template is documented at http://go.microsoft.com/fwlink/?LinkId=234236
 
 namespace IntelligentKioskSample.Controls
@@ -134,10 +136,12 @@ namespace IntelligentKioskSample.Controls
         private SemaphoreSlim frameProcessingSemaphore = new SemaphoreSlim(1);
         private AutoCaptureState autoCaptureState;
         private IEnumerable<Windows.Media.FaceAnalysis.DetectedFace> detectedFacesFromPreviousFrame;
-        private DateTime timeSinceWaitingForStill;
-        private DateTime lastTimeWhenAFaceWasDetected;
+        private System.DateTime timeSinceWaitingForStill;
+        private System.DateTime lastTimeWhenAFaceWasDetected;
 
         private IRealTimeDataProvider realTimeDataProvider;
+
+        //private DJIVideoParser.Parser videoParser;
 
         public CameraControl()
         {
@@ -146,8 +150,43 @@ namespace IntelligentKioskSample.Controls
 
         #region Camera stream processing
 
+        public async Task InitializeVideoFeedModule()
+        {
+            //Must in UI thread
+            try
+            {
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
+                {
+                    ////Raw data and decoded data listener
+                    //if (videoParser == null)
+                    //{
+                    //    videoParser = new DJIVideoParser.Parser();
+                    //    videoParser.Initialize(delegate (byte[] data)
+                    //    {
+                    //        //Note: This function must be called because we need DJI Windows SDK to help us to parse frame data.
+                    //        return DJISDKManager.Instance.VideoFeeder.ParseAssitantDecodingInfo(0, data);
+                    //    });
+                    //    //Set the swapChainPanel to display and set the decoded data callback.
+                    //    videoParser.SetSurfaceAndVideoCallback(0, 0, swapChainPanel, ReceiveDecodedData);
+                    //    DJISDKManager.Instance.VideoFeeder.GetPrimaryVideoFeed(0).VideoDataUpdated += OnVideoPush;
+                    //}
+                    ////get the camera type and observe the CameraTypeChanged event.
+                    //DJISDKManager.Instance.ComponentManager.GetCameraHandler(0, 0).CameraTypeChanged += OnCameraTypeChanged;
+                    //var type = await DJISDKManager.Instance.ComponentManager.GetCameraHandler(0, 0).GetCameraTypeAsync();
+                    //OnCameraTypeChanged(this, type.value);
+                });
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
         public async Task StartStreamAsync(bool isForRealTimeProcessing = false)
         {
+            //todo: put the code in here for registering dji callbacks and registration
+            // remove all references of a camera and only refernece the dji library. 
             try
             {
                 if (captureManager == null ||
@@ -244,6 +283,7 @@ namespace IntelligentKioskSample.Controls
 
         private async void ProcessCurrentVideoFrame(ThreadPoolTimer timer)
         {
+            //todo: remove binding to control and bind from here 
             if (captureManager.CameraStreamState != Windows.Media.Devices.CameraStreamState.Streaming
                 || !frameProcessingSemaphore.Wait(0))
             {
@@ -386,7 +426,7 @@ namespace IntelligentKioskSample.Controls
             if (!detectedFaces.Any())
             {
                 if (this.autoCaptureState == AutoCaptureState.WaitingForStillFaces &&
-                    (DateTime.Now - this.lastTimeWhenAFaceWasDetected).TotalSeconds > IntervalWithoutFacesBeforeRevertingToWaitingForFaces)
+                    (System.DateTime.Now - this.lastTimeWhenAFaceWasDetected).TotalSeconds > IntervalWithoutFacesBeforeRevertingToWaitingForFaces)
                 {
                     this.autoCaptureState = AutoCaptureState.WaitingForFaces;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
@@ -398,14 +438,14 @@ namespace IntelligentKioskSample.Controls
                 return;
             }
 
-            this.lastTimeWhenAFaceWasDetected = DateTime.Now;
+            this.lastTimeWhenAFaceWasDetected = System.DateTime.Now;
 
             switch (this.autoCaptureState)
             {
                 case AutoCaptureState.WaitingForFaces:
                     // We were waiting for faces and got some... go to the "waiting for still" state
                     this.detectedFacesFromPreviousFrame = detectedFaces;
-                    this.timeSinceWaitingForStill = DateTime.Now;
+                    this.timeSinceWaitingForStill = System.DateTime.Now;
                     this.autoCaptureState = AutoCaptureState.WaitingForStillFaces;
 
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
@@ -417,7 +457,7 @@ namespace IntelligentKioskSample.Controls
 
                 case AutoCaptureState.WaitingForStillFaces:
                     // See if we have been waiting for still faces long enough
-                    if ((DateTime.Now - this.timeSinceWaitingForStill).TotalMilliseconds >= IntervalBeforeCheckingForStill)
+                    if ((System.DateTime.Now - this.timeSinceWaitingForStill).TotalMilliseconds >= IntervalBeforeCheckingForStill)
                     {
                         // See if the faces are still enough
                         if (this.AreFacesStill(this.detectedFacesFromPreviousFrame, detectedFaces))
@@ -431,7 +471,7 @@ namespace IntelligentKioskSample.Controls
                         else
                         {
                             // Faces moved too much, update the baseline and keep waiting
-                            this.timeSinceWaitingForStill = DateTime.Now;
+                            this.timeSinceWaitingForStill = System.DateTime.Now;
                             this.detectedFacesFromPreviousFrame = detectedFaces;
                         }
                     }
