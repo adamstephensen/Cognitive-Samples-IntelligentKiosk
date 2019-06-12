@@ -56,12 +56,16 @@ using DJI.WindowsSDK;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.AI.MachineLearning;
+using Windows.Storage.Streams;
+using DJIVideoParser;
+using System.Diagnostics;
+using System.Threading;
 //using DJIVideoParser;
 
 namespace IntelligentKioskSample.Views
 {
     [KioskExperience(Title = "Realtime Object Detection", ImagePath = "ms-appx:/Assets/RealtimeObjectDetection.png", ExperienceType = ExperienceType.Kiosk)]
-    public sealed partial class RealtimeObjectDetection : Page, ICameraFrameProcessor
+    public sealed partial class RealtimeObjectDetection : Page
     {
         private readonly int ObjectDetectionModelInputSize = 416;
         private readonly float MinProbabilityValue = 0.6f;
@@ -92,7 +96,7 @@ namespace IntelligentKioskSample.Views
             if (resultCode == SDKError.NO_ERROR)
             {
                 System.Diagnostics.Debug.WriteLine("Register app successfully.");
-
+                
                 //The product connection state will be updated when it changes here.
                 DJISDKManager.Instance.ComponentManager.GetProductHandler(0).ProductTypeChanged += async delegate (object sender, ProductTypeMsg? value)
                 {
@@ -100,8 +104,9 @@ namespace IntelligentKioskSample.Views
                     {
                         if (value != null && value?.value != ProductType.UNRECOGNIZED)
                         {
-                            System.Diagnostics.Debug.WriteLine("The Aircraft is connected now.");
+                            System.Diagnostics.Debug.WriteLine("The Aircraft is connected now 1.");
                             //You can load/display your pages according to the aircraft connection state here.
+                            await InitializeVideoFeedModule();
                         }
                         else
                         {
@@ -110,14 +115,17 @@ namespace IntelligentKioskSample.Views
                         }
                     });
                 };
-
+                /*
                 //If you want to get the latest product connection state manually, you can use the following code
                 var productType = (await DJISDKManager.Instance.ComponentManager.GetProductHandler(0).GetProductTypeAsync()).value;
                 if (productType != null && productType?.value != ProductType.UNRECOGNIZED)
                 {
-                    System.Diagnostics.Debug.WriteLine("The Aircraft is connected now.");
+                    System.Diagnostics.Debug.WriteLine("The Aircraft is connected now 2.");
                     //You can load/display your pages according to the aircraft connection state here.
+                    await InitializeVideoFeedModule();
+                    
                 }
+                */
             }
             else
             {
@@ -125,48 +133,76 @@ namespace IntelligentKioskSample.Views
                 System.Diagnostics.Debug.WriteLine(resultCode.ToString());
             }
         }
+        private DJIVideoParser.Parser videoParser;
+        private async Task InitializeVideoFeedModule()
+        {
+            System.Diagnostics.Debug.WriteLine("Init Video Feed");
+            //Must in UI thread
+            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
+            {
+                System.Diagnostics.Debug.WriteLine("Init Video Feed on UI Thread");
+                //Raw data and decoded data listener
+                if (videoParser == null)
+                {
+                    try
+                    {
+                        videoParser = new DJIVideoParser.Parser();
+                    }
+                    catch(Exception e)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Failed to init!");
+                        return;
+                    }
+                    videoParser.Initialize(delegate (byte[] data)
+                    {
+                        //Note: This function must be called because we need DJI Windows SDK to help us to parse frame data.
+                        return DJISDKManager.Instance.VideoFeeder.ParseAssitantDecodingInfo(0, data);
+                    });
+
+                    System.Diagnostics.Debug.WriteLine("Video parser ready");
+
+                    //Set the swapChainPanel to display and set the decoded data callback.
+                    videoParser.SetSurfaceAndVideoCallback(0, 0, swapChainPanel, ReceiveDecodedData);
+                    DJISDKManager.Instance.VideoFeeder.GetPrimaryVideoFeed(0).VideoDataUpdated += (sender, bytes) =>
+                        videoParser.PushVideoData(0, 0, bytes, bytes.Length);
+                }
+                //get the camera type and observe the CameraTypeChanged event.
+                var type = await DJISDKManager.Instance.ComponentManager.GetCameraHandler(0, 0).GetCameraTypeAsync();
+                this.videoParser.SetCameraSensor(AircraftCameraType.Mavic2Pro);
+                System.Diagnostics.Debug.WriteLine("Set camera type for " + type.value?.value??"");
+                await DJI.WindowsSDK.DJISDKManager.Instance.ComponentManager.GetCameraHandler(0, 0).SetCameraWorkModeAsync(new CameraWorkModeMsg { value = CameraWorkMode.SHOOT_PHOTO });
+                System.Diagnostics.Debug.WriteLine("Live!");
+            });
+        }
+        private SemaphoreSlim _slim = new SemaphoreSlim(1);
         async void ReceiveDecodedData(byte[] data, int width, int height)
         {
-            var buffer = data.AsBuffer();
-            var softwareBitmap = SoftwareBitmap.CreateCopyFromBuffer(buffer, BitmapPixelFormat.Rgba8, width, height);
-            var videoFrame = VideoFrame.CreateWithSoftwareBitmap(softwareBitmap);
-            var imageFeatureValue = ImageFeatureValue.CreateFromVideoFrame(videoFrame);
-
-            File.WriteAllBytes(@"C:\temp\images\" + Guid.NewGuid().ToString() + ".png", data);
+            if (!await _slim.WaitAsync(0)) return;
+            try
+            {
+                IBuffer buffer = data.AsBuffer();
+                using (SoftwareBitmap softwareBitmap = SoftwareBitmap.CreateCopyFromBuffer(buffer, BitmapPixelFormat.Rgba8, width, height))
+                using (VideoFrame videoFrame = VideoFrame.CreateWithSoftwareBitmap(softwareBitmap))
+                {
+                    await ProcessFrameInternal(videoFrame);
+                }
+            }
+            finally
+            {
+                _slim.Release();
+            }
         }
-
- 
-
 
         public RealtimeObjectDetection()
         {
             this.InitializeComponent();
 
             RegisterDJISDK();
-
-            Window.Current.Activated += CurrentWindowActivationStateChanged;
-            this.cameraControl.HideCameraControls();
-            this.cameraControl.CameraFrameProcessor = this;
-            this.cameraControl.PerformFaceTracking = false;
-            this.cameraControl.ShowFaceTracking = false;
-            this.cameraControl.CameraAspectRatioChanged += CameraControl_CameraAspectRatioChanged;
         }
 
         private void CameraControl_CameraAspectRatioChanged(object sender, EventArgs e)
         {
             this.UpdateCameraHostSize();
-        }
-
-        private async void CurrentWindowActivationStateChanged(object sender, Windows.UI.Core.WindowActivatedEventArgs e)
-        {
-            if ((e.WindowActivationState == Windows.UI.Core.CoreWindowActivationState.CodeActivated ||
-                e.WindowActivationState == Windows.UI.Core.CoreWindowActivationState.PointerActivated) &&
-                this.cameraControl.CameraStreamState == Windows.Media.Devices.CameraStreamState.Shutdown)
-            {
-                // When our Window loses focus due to user interaction Windows shuts it down, so we 
-                // detect here when the window regains focus and trigger a restart of the camera.
-                await this.cameraControl.StartStreamAsync(isForRealTimeProcessing: true);
-            }
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -175,8 +211,6 @@ namespace IntelligentKioskSample.Views
             EnterKioskMode();
 
             await this.LoadProjectsFromFile(e.Parameter as CustomVisionModelData);
-            await this.cameraControl.StartStreamAsync(isForRealTimeProcessing: true);
-            await this.cameraControl.InitializeVideoFeedModule();
 
             base.OnNavigatedTo(e);
         }
@@ -192,10 +226,6 @@ namespace IntelligentKioskSample.Views
 
         protected override async void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
-            Window.Current.Activated -= CurrentWindowActivationStateChanged;
-            this.cameraControl.CameraAspectRatioChanged -= CameraControl_CameraAspectRatioChanged;
-
-            await this.cameraControl.StopStreamAsync();
             base.OnNavigatingFrom(e);
         }
 
@@ -343,9 +373,10 @@ namespace IntelligentKioskSample.Views
                 this.projectsComboBox.SelectedIndex = 0;
             }
         }
-
-        public async Task ProcessFrame(VideoFrame videoFrame, Canvas visualizationCanvas)
+        public async Task ProcessFrameInternal(VideoFrame videoFrame)
         {
+            Canvas visualizationCanvas = this.FaceTrackingVisualizationCanvas;
+
             if (!isModelLoadedSuccessfully)
             {
                 return;
@@ -365,6 +396,8 @@ namespace IntelligentKioskSample.Views
                         IList<PredictionModel> predictions = await this.objectDetectionModel.PredictImageAsync(buffer);
 
                         double predictionTimeInMilliseconds = (System.DateTime.Now - start).TotalMilliseconds;
+
+                        if (predictions.Count > 0) Debug.WriteLine("I saw " + string.Join(", ", predictions.Select(x => x.TagName)));
 
                         await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                         {

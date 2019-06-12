@@ -1,17 +1,5 @@
 [
   {
-    "Id": "f2002174-b90a-491d-b8d3-8fd892b53d96",
-    "Name": "Safety Items",
-    "ClassLabels": [
-      "hardhat",
-      "hivisvest"
-    ],
-    "ExportDate": "2019-02-11T12:00:00.33454Z",
-    "FileName": "safety_model.onnx",
-    "FilePath": "Assets\\safety_model.onnx",
-    "IsPrebuiltModel": "true"
-  },
-  {
     "Id": "f2002174-b90a-491d-b8d3-8fd892b53d95",
     "Name": "Mixed Items",
     "ClassLabels": [
@@ -39,6 +27,18 @@
     "ExportDate": "2019-02-11T12:00:00.33454Z",
     "FileName": "mixed_items.onnx",
     "FilePath": "Assets\\mixed_items.onnx",
+    "IsPrebuiltModel": "true"
+  },
+  {
+    "Id": "f2002174-b90a-491d-b8d3-8fd892b53d96",
+    "Name": "Safety Items",
+    "ClassLabels": [
+      "hardhat",
+      "hivisvest"
+    ],
+    "ExportDate": "2019-02-11T12:00:00.33454Z",
+    "FileName": "safety_model.onnx",
+    "FilePath": "Assets\\safety_model.onnx",
     "IsPrebuiltModel": "true"
   }
 ]
