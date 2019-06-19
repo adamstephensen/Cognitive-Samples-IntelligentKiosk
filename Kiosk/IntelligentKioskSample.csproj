@@ -107,6 +107,9 @@
     <Content Include="DJIWindowsWrapper.winmd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Assets\aussie_animals.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="IntelligentKioskSample_TemporaryKey.pfx" />
     <None Include="packages.config" />
     <Content Include="avcodec-56.dll">
@@ -147,6 +150,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="aussie_animals.cs" />
     <Compile Include="CognitiveServiceApiKeyTester.cs" />
     <Compile Include="Controls\CenteredVerticalBarControl.xaml.cs">
       <DependentUpon>CenteredVerticalBarControl.xaml</DependentUpon>

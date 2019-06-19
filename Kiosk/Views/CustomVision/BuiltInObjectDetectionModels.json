@@ -1,5 +1,18 @@
 [
   {
+    "Id": "f2002174-b90a-491d-b8d3-8fd892b53d94",
+    "Name": "Aussie Animals",
+    "ClassLabels": [
+      "croc",
+      "wombat",
+      "koala"
+    ],
+    "ExportDate": "2019-02-11T12:00:00.33454Z",
+    "FileName": "aussie_animals.onnx",
+    "FilePath": "Assets\\aussie_animals.onnx",
+    "IsPrebuiltModel": "true"
+  },
+  {
     "Id": "f2002174-b90a-491d-b8d3-8fd892b53d95",
     "Name": "Mixed Items",
     "ClassLabels": [

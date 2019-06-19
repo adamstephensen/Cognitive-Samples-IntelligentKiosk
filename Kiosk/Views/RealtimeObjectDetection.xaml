@@ -23,9 +23,9 @@
             </CommandBar.Content>
         </CommandBar>
 
-        <SwapChainPanel x:Name="swapChainPanel" Visibility="Visible" Height="720" Width="1280" />
+        <SwapChainPanel x:Name="swapChainPanel" Visibility="Visible" Height="720" Width="1088" />
         <!-- FlowDirection="{Binding ElementName=cameraControl, Path=FlowDirection}" /> -->
-        <Canvas x:Name="FaceTrackingVisualizationCanvas"  Height="720" Width="1280" />
+        <Canvas x:Name="FaceTrackingVisualizationCanvas"  Height="720" Width="1088" />
         <!--FlowDirection="{Binding ElementName=cameraControl, Path=FlowDirection}" /> -->
         <TextBlock x:Name="fpsTextBlock" Visibility="Collapsed" Margin="0,0,2,0" HorizontalAlignment="Right" VerticalAlignment="Bottom" FontStyle="Italic" FontSize="24"/>
         

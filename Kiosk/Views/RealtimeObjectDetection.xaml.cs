@@ -73,8 +73,17 @@ namespace IntelligentKioskSample.Views
         private string[] allModelObjects;
         private ObjectDetection objectDetectionModel;
         private bool isModelLoadedSuccessfully = false;
+        private DJIVideoParser.Parser videoParser;
+        private SemaphoreSlim _slim = new SemaphoreSlim(1);
 
         public ObservableCollection<CustomVisionModelData> Projects { get; set; } = new ObservableCollection<CustomVisionModelData>();
+
+        public RealtimeObjectDetection()
+        {
+            this.InitializeComponent();
+
+            RegisterDJISDK();
+        }
 
         private void RegisterDJISDK() {
             try
@@ -91,6 +100,7 @@ namespace IntelligentKioskSample.Views
                 throw;
             }
         }
+
         private async void Instance_SDKRegistrationEvent(SDKRegistrationState state, SDKError resultCode)
         {
             if (resultCode == SDKError.NO_ERROR)
@@ -133,7 +143,7 @@ namespace IntelligentKioskSample.Views
                 System.Diagnostics.Debug.WriteLine(resultCode.ToString());
             }
         }
-        private DJIVideoParser.Parser videoParser;
+        
         private async Task InitializeVideoFeedModule()
         {
             System.Diagnostics.Debug.WriteLine("Init Video Feed");
@@ -174,13 +184,14 @@ namespace IntelligentKioskSample.Views
                 System.Diagnostics.Debug.WriteLine("Live!");
             });
         }
-        private SemaphoreSlim _slim = new SemaphoreSlim(1);
+
         async void ReceiveDecodedData(byte[] data, int width, int height)
         {
             if (!await _slim.WaitAsync(0)) return;
             try
             {
                 IBuffer buffer = data.AsBuffer();
+                Debug.WriteLine($"ReceiveDecodedData  Width: {width} Height: {height}");
                 using (SoftwareBitmap softwareBitmap = SoftwareBitmap.CreateCopyFromBuffer(buffer, BitmapPixelFormat.Rgba8, width, height))
                 using (VideoFrame videoFrame = VideoFrame.CreateWithSoftwareBitmap(softwareBitmap))
                 {
@@ -192,13 +203,50 @@ namespace IntelligentKioskSample.Views
                 _slim.Release();
             }
         }
-
-        public RealtimeObjectDetection()
+        public async Task ProcessFrameInternal(VideoFrame videoFrame)
         {
-            this.InitializeComponent();
+            Canvas visualizationCanvas = this.FaceTrackingVisualizationCanvas;
 
-            RegisterDJISDK();
+            if (!isModelLoadedSuccessfully)
+            {
+                return;
+            }
+
+            try
+            {
+                using (SoftwareBitmap bitmapBuffer = new SoftwareBitmap(BitmapPixelFormat.Bgra8,
+                    ObjectDetectionModelInputSize, ObjectDetectionModelInputSize, BitmapAlphaMode.Ignore))
+                {
+                    using (VideoFrame buffer = VideoFrame.CreateWithSoftwareBitmap(bitmapBuffer))
+                    {
+                        await videoFrame.CopyToAsync(buffer);
+
+                        System.DateTime start = System.DateTime.Now;
+
+                        IList<PredictionModel> predictions = await this.objectDetectionModel.PredictImageAsync(buffer);
+
+                        double predictionTimeInMilliseconds = (System.DateTime.Now - start).TotalMilliseconds;
+
+                        if (predictions.Count > 0) Debug.WriteLine("I saw " + string.Join(", ", predictions.Select(x => x.TagName)));
+
+                        await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                        {
+                            this.ShowVisualization(visualizationCanvas, predictions);
+                            this.fpsTextBlock.Text = predictionTimeInMilliseconds > 0 ? $"{Math.Round(1000 / predictionTimeInMilliseconds)} fps" : string.Empty;
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                this.isModelLoadedSuccessfully = false;
+                await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
+                {
+                    await Util.GenericApiCallExceptionHandler(ex, "Failure processing frame");
+                });
+            }
         }
+
 
         private void CameraControl_CameraAspectRatioChanged(object sender, EventArgs e)
         {
@@ -293,6 +341,7 @@ namespace IntelligentKioskSample.Views
 
         private void UpdateCameraHostSize()
         {
+            Debug.WriteLine($"UpdateCameraHostSize  Width: {this.cameraHostGrid.ActualWidth} Height: {this.cameraHostGrid.ActualHeight}");
             this.cameraHostGrid.Width = this.cameraHostGrid.ActualHeight;
         }
 
@@ -373,54 +422,13 @@ namespace IntelligentKioskSample.Views
                 this.projectsComboBox.SelectedIndex = 0;
             }
         }
-        public async Task ProcessFrameInternal(VideoFrame videoFrame)
-        {
-            Canvas visualizationCanvas = this.FaceTrackingVisualizationCanvas;
-
-            if (!isModelLoadedSuccessfully)
-            {
-                return;
-            }
-
-            try
-            {
-                using (SoftwareBitmap bitmapBuffer = new SoftwareBitmap(BitmapPixelFormat.Bgra8,
-                    ObjectDetectionModelInputSize, ObjectDetectionModelInputSize, BitmapAlphaMode.Ignore))
-                {
-                    using (VideoFrame buffer = VideoFrame.CreateWithSoftwareBitmap(bitmapBuffer))
-                    {
-                        await videoFrame.CopyToAsync(buffer);
-
-                        System.DateTime start = System.DateTime.Now;
-
-                        IList<PredictionModel> predictions = await this.objectDetectionModel.PredictImageAsync(buffer);
-
-                        double predictionTimeInMilliseconds = (System.DateTime.Now - start).TotalMilliseconds;
-
-                        if (predictions.Count > 0) Debug.WriteLine("I saw " + string.Join(", ", predictions.Select(x => x.TagName)));
-
-                        await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
-                        {
-                            this.ShowVisualization(visualizationCanvas, predictions);
-                            this.fpsTextBlock.Text = predictionTimeInMilliseconds > 0 ? $"{Math.Round(1000 / predictionTimeInMilliseconds)} fps" : string.Empty;
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                this.isModelLoadedSuccessfully = false;
-                await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
-                {
-                    await Util.GenericApiCallExceptionHandler(ex, "Failure processing frame");
-                });
-            }
-        }
 
         private void ShowVisualization(Canvas visualizationCanvas, IList<PredictionModel> detectedObjects)
         {
             visualizationCanvas.Children.Clear();
 
+            Debug.WriteLine($"ShowVisualization canvas  Width: {visualizationCanvas.ActualWidth} Height: {visualizationCanvas.ActualHeight}");
+            
             double canvasWidth = visualizationCanvas.ActualWidth;
             double canvasHeight = visualizationCanvas.ActualHeight;
 
